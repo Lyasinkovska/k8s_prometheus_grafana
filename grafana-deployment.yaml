@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  labels:
+    app: grafana-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana-app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: grafana-app
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana
+          ports:
+            - containerPort: 3000
+              hostPort: 3000
+              protocol: TCP
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-app-secret
+                  key: gf_password
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-app-secret
+                  key: gf_user
+          volumeMounts:
+            - mountPath: /etc/grafana/provisioning/datasources
+              name: grafana-volume
+      restartPolicy: Always
+      volumes:
+        - name: grafana-volume
+          configMap:
+            name: grafana-config
